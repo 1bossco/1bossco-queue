@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8"/>
+  <title>Staff Panel</title>
+  <style>
+    /* ------------------------------
+      Theme system (Light/Dark)
+    ------------------------------ */
+    :root{
+      --bg:#0b1220; --bg2:#060a14;
+      --card: rgba(255,255,255,.07);
+      --line: rgba(255,255,255,.10);
+      --text:#e8eefc; --muted:#a9b4c7;
+      --good:#22c55e; --warn:#f59e0b; --bad:#ef4444; --info:#3b82f6;
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --radius: 18px;
+
+      --controlBg: rgba(255,255,255,.06);
+      --controlText: #e8eefc;
+    }
+
+    [data-theme="light"]{
+      --bg:#f4f6fb; --bg2:#eef2ff;
+      --card: rgba(0,0,0,.04);
+      --line: rgba(0,0,0,.10);
+      --text:#0b1220; --muted:#334155;
+      --shadow: 0 18px 40px rgba(0,0,0,.10);
+
+      /* Light mode: solid background, readable controls */
+      --controlBg: #ffffff;
+      --controlText: #0b1220;
+    }
+
+    html,body{
+      margin:0;
+      font-family:Arial,sans-serif;
+      background: radial-gradient(1200px 700px at 10% 10%, #1a2b58 0%, var(--bg) 46%, var(--bg2) 100%);
+      color:var(--text);
+    }
+    [data-theme="light"] html,
+    [data-theme="light"] body{
+      background: var(--bg);
+    }
+
+    .wrap{width:min(1220px,96vw);margin:0 auto;padding:16px 0 24px;display:grid;gap:14px;}
+    .top{
+      display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;
+      padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);
+      background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
+      box-shadow:var(--shadow);
+    }
+    [data-theme="light"] .top{background:#fff;}
+    h1{margin:0;font-size:22px;}
+    .muted{color:var(--muted);font-size:13px;}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+
+    select,button,input,textarea{
+      padding:10px 12px;border-radius:12px;border:1px solid var(--line);
+      background:var(--controlBg);color:var(--controlText);font-size:14px;outline:none;
+    }
+    select option{color:var(--controlText);background:var(--controlBg);}
+    textarea{width:100%;min-height:110px;resize:vertical;}
+
+    select{
+      color: var(--controlText);
+      background: var(--controlBg);
+    }
+    select option{
+      color: #000;
+      background: #fff;
+    }
+
+    button{cursor:pointer;font-weight:1000;}
+    button:disabled{opacity:.55;cursor:not-allowed;}
+
+    .btn-green{background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.35);color:var(--text);}
+    .btn-blue{background:rgba(59,130,246,.18);border-color:rgba(59,130,246,.35);color:var(--text);}
+    .btn-red{background:rgba(239,68,68,.18);border-color:rgba(239,68,68,.35);color:var(--text);}
+    .btn-orange{background:rgba(245,158,11,.18);border-color:rgba(245,158,11,.35);color:var(--text);}
+    .btn-theme{background:rgba(59,130,246,.18);border-color:rgba(59,130,246,.35);color:var(--text);}
+
+    .grid{display:grid;grid-template-columns:1.35fr .65fr;gap:14px;}
+    @media(max-width:980px){.grid{grid-template-columns:1fr;}}
+
+    .card{
+      background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));
+      border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;
+    }
+    [data-theme="light"] .card{background:#fff;}
+    .head{
+      padding:12px 14px;border-bottom:1px solid var(--line);
+      background:rgba(0,0,0,.18);display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;
+    }
+    [data-theme="light"] .head{background:rgba(0,0,0,.03);}
+    .body{padding:14px;}
+    .big{font-size:42px;font-weight:1000;letter-spacing:1px;margin:6px 0;}
+    .toast{min-height:18px;color:var(--muted);font-size:13px;margin-top:8px;}
+    .toast.ok{color:#16a34a;}
+    .toast.bad{color:#dc2626;}
+
+    .checks{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px;}
+    @media(max-width:560px){.checks{grid-template-columns:1fr;}}
+    .checkItem{
+      display:flex;gap:10px;align-items:flex-start;padding:10px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.05);
+    }
+    [data-theme="light"] .checkItem{border-color:rgba(0,0,0,.10);background:#f8fafc;}
+    .checkItem input{transform:scale(1.15);margin-top:2px;}
+
+    .list{display:grid;gap:8px;margin-top:8px;}
+    .listItem{
+      display:flex;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.05);
+    }
+    [data-theme="light"] .listItem{border-color:rgba(0,0,0,.10);background:#f8fafc;}
+    .listItem b{letter-spacing:.4px;}
+
+    .divider{border:none;border-top:1px solid rgba(255,255,255,.10);margin:14px 0;}
+    [data-theme="light"] .divider{border-top:1px solid rgba(0,0,0,.10);}
+
+    .collapseBtn{
+      background:transparent;border:1px solid var(--line);
+      color:var(--text);font-weight:900;
+    }
+    .hidden{display:none;}
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="top">
+      <div>
+        <h1>Counter Staff Panel</h1>
+        <div class="muted">Call Next • Call Again • Mark Done • No Show • Transfer by Agency • Checklist • Calendar</div>
+      </div>
+
+      <div class="row">
+        <button class="btn-theme" id="themeToggle" onclick="toggleTheme()">🌙 Night</button>
+        <span class="muted"><b id="agencyText">Agency: —</b></span>
+        <select id="counter"></select>
+        <span class="muted" id="loading" style="display:none;">Processing…</span>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: Current + checklist + calendar -->
+      <div class="card">
+        <div class="head">
+          <b>Current Client</b>
+          <div class="row">
+            <button class="btn-green" id="callNextBtn" onclick="callNext()">Call Next</button>
+            <button class="btn-blue" id="callAgainBtn" onclick="callAgain()">Call Again</button>
+            <button class="btn-red" id="markDoneBtn" onclick="markDone()">Mark Done</button>
+            <button class="btn-orange" id="noShowBtn" onclick="noShow()">No Show</button>
+          </div>
+        </div>
+
+        <div class="body">
+          <div class="big" id="ticketText">—</div>
+          <div class="muted">Service: <b id="serviceText">—</b></div>
+          <div class="muted">Status: <b id="statusText">—</b></div>
+          <div class="toast" id="toast"></div>
+
+          <hr class="divider">
+
+          <b>Tick Services Availed</b>
+          <div class="muted" style="margin-top:4px;">Choose all services the client completed (required before Mark Done).</div>
+          <div id="checksWrap" class="checks"></div>
+
+          <hr class="divider">
+
+          <div class="row" style="justify-content:space-between;">
+            <b>Calendar of Activities</b>
+            <button class="collapseBtn" id="calendarToggle" onclick="toggleCalendar()">Hide</button>
+          </div>
+
+          <div id="calendarSection">
+
+            <!-- Calendar Viewer -->
+            <div class="row" style="margin-top:10px; justify-content:space-between; align-items:flex-end;">
+              <div>
+                <b>Overall Calendar</b>
+                <div class="muted">Shows notices from all agencies.</div>
+              </div>
+              <button class="btn-blue" onclick="loadCalendar()">Refresh</button>
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+              <span class="muted"><b>From</b></span>
+              <input type="date" id="calFrom">
+              <span class="muted"><b>To</b></span>
+              <input type="date" id="calTo">
+              <span class="muted" id="calCount"></span>
+            </div>
+
+            <div id="calendarList" class="list" style="margin-top:10px;"></div>
+
+            <hr class="divider">
+
+            <!-- Add Notice -->
+            <b>Add Notice (Your Agency)</b>
+            <div class="muted" style="margin-top:6px;">
+              Select date and type the announcement. It will appear in the overall calendar.
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+              <span class="muted"><b>Date</b></span>
+              <input type="date" id="eventDate">
+              <span class="muted"><b>Type / Notice</b></span>
+              <input type="text" id="eventType" placeholder="e.g., System maintenance / Holiday / Orientation">
+            </div>
+
+            <div class="row" style="margin-top:10px; align-items:flex-start;">
+              <textarea id="eventNote" placeholder="Write the announcement/details here…"></textarea>
+            </div>
+
+            <div class="row" style="margin-top:10px;">
+              <button class="btn-green" onclick="saveCalendar()">Save to Calendar</button>
+              <span class="muted" id="calMsg"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: Upcoming + Transfer -->
+      <div class="card">
+        <div class="head"><b id="upcomingTitle">Upcoming Clients</b></div>
+        <div class="body">
+          <div class="muted">Next waiting clients for this counter.</div>
+          <div id="upcomingWrap" class="list"></div>
+
+          <hr class="divider">
+
+          <b>Transfer Client</b>
+          <div class="muted">Select target agency (system auto-assigns counter). Ticket stays the same.</div>
+
+          <div id="transferControls" style="display:none;margin-top:10px;">
+            <div class="row" style="justify-content:flex-start;margin-top:8px;">
+              <span class="muted"><b>To Agency</b></span>
+              <select id="transferAgency"></select>
+            </div>
+            <div class="row" style="justify-content:flex-start;margin-top:10px;">
+              <button class="btn-orange" onclick="transferClient()">Transfer</button>
+            </div>
+          </div>
+          <div id="transferHint" class="muted" style="margin-top:10px;">No current Serving ticket.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ------------------------------
+  // State
+  // ------------------------------
+  let currentTicket="", currentStatus="Idle", currentService="-", currentAgency="";
+
+  // ------------------------------
+  // Helpers
+  // ------------------------------
+  function showLoading(v){ document.getElementById("loading").style.display = v ? "inline" : "none"; }
+  function toast(msg, type){
+    const el = document.getElementById("toast");
+    el.textContent = msg || "";
+    el.className = "toast" + (type ? (" "+type) : "");
+  }
+
+  // ------------------------------
+  // Theme (Day/Night)
+  // ------------------------------
+  function applyTheme(theme){
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("staffTheme", theme);
+    const btn = document.getElementById("themeToggle");
+    btn.textContent = (theme === "light") ? "🌙 Night" : "☀️ Day";
+  }
+  function toggleTheme(){
+    const current = document.documentElement.getAttribute("data-theme") || "dark";
+    applyTheme(current === "dark" ? "light" : "dark");
+  }
+  (function initTheme(){
+    const saved = localStorage.getItem("staffTheme");
+    if(saved){ applyTheme(saved); return; }
+    const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+    applyTheme(prefersLight ? "light" : "dark");
+  })();
+
+  // ------------------------------
+  // Build counters dropdown
+  // ------------------------------
+  function buildCounters(){
+    const sel = document.getElementById("counter");
+    sel.innerHTML = "";
+    for(let i=1;i<=25;i++){
+      const o=document.createElement("option");
+      o.value=String(i); o.textContent="Counter "+i;
+      sel.appendChild(o);
+    }
+  }
+
+  // ------------------------------
+  // Checklist UI
+  // ------------------------------
+  function renderChecklist(items){
+    const wrap=document.getElementById("checksWrap");
+    wrap.innerHTML="";
+    if(!items || items.length===0){
+      wrap.innerHTML = `<div class="muted">No checklist configured for this agency.</div>`;
+      return;
+    }
+    items.forEach(name=>{
+      const safe = String(name).replace(/"/g,'&quot;');
+      const lbl=document.createElement("label");
+      lbl.className="checkItem";
+      lbl.innerHTML=`<input type="checkbox" value="${safe}">
+        <div><b>${safe}</b><div class="muted">Tick if availed</div></div>`;
+      wrap.appendChild(lbl);
+    });
+  }
+  function getSelectedChecklist(){
+    const selected=[];
+    document.querySelectorAll("#checksWrap input[type='checkbox']").forEach(c=>{
+      if(c.checked) selected.push(c.value);
+    });
+    return selected;
+  }
+  function clearChecklist(){
+    document.querySelectorAll("#checksWrap input[type='checkbox']").forEach(c=>c.checked=false);
+  }
+
+  // ------------------------------
+  // Upcoming UI
+  // ------------------------------
+  function renderUpcoming(summary){
+    const list = (summary && summary.list) ? summary.list : [];
+    const total = (summary && typeof summary.total === "number") ? summary.total : 0;
+
+    document.getElementById("upcomingTitle").textContent = `Upcoming Clients (${total})`;
+
+    const wrap=document.getElementById("upcomingWrap");
+    wrap.innerHTML="";
+    if(!list || list.length===0){
+      wrap.innerHTML = `<div class="muted">No waiting clients.</div>`;
+      return;
+    }
+    list.forEach((x, idx)=>{
+      const div=document.createElement("div");
+      div.className="listItem";
+      div.innerHTML=`<div><b>${x.ticket}</b><div class="muted">${x.service}</div></div><div class="muted">#${idx+1}</div>`;
+      wrap.appendChild(div);
+    });
+  }
+
+  // ------------------------------
+  // Transfer agencies dropdown (unique agencies)
+  // ------------------------------
+  function loadTransferAgencies(){
+    google.script.run.withSuccessHandler(function(list){
+      const map = new Map();
+      (list||[]).forEach(x=>{
+        if(!x.agency) return;
+        if(!map.has(x.agency)) map.set(x.agency, x);
+      });
+      const unique = Array.from(map.keys()).sort((a,b)=>String(a).localeCompare(String(b)));
+
+      const sel = document.getElementById("transferAgency");
+      sel.innerHTML="";
+      unique.forEach(name=>{
+        const o=document.createElement("option");
+        o.value=name; o.textContent=name;
+        sel.appendChild(o);
+      });
+    }).getClientAgencyOptions();
+  }
+
+  // ------------------------------
+  // Load checklist config by counter
+  // ------------------------------
+  function loadChecklistConfig(){
+    const counter=document.getElementById("counter").value;
+    showLoading(true);
+    google.script.run.withSuccessHandler(function(cfg){
+      showLoading(false);
+      currentAgency = cfg.agency || "";
+      document.getElementById("agencyText").textContent = "Agency: " + (cfg.agency || "—");
+      renderChecklist(cfg.items || []);
+    }).getChecklistForCounter(counter);
+  }
+
+  // ------------------------------
+  // Refresh status & upcoming count
+  // ------------------------------
+  function refreshStatus(){
+    const counter=document.getElementById("counter").value;
+
+    google.script.run.withSuccessHandler(function(info){
+      currentTicket = info.ticket || "";
+      currentStatus = info.status || "Idle";
+      currentService = info.service || "-";
+
+      const displayTicket = (currentTicket && currentTicket!=="None") ? currentTicket : "—";
+      document.getElementById("ticketText").textContent = displayTicket;
+      document.getElementById("serviceText").textContent = currentService || "-";
+      document.getElementById("statusText").textContent = currentStatus || "-";
+
+      // Call Next blocked unless finished (Mark Done / No Show)
+      const serving = (currentStatus === "Serving" && currentTicket && currentTicket !== "None" && currentTicket !== "-");
+      document.getElementById("callNextBtn").disabled = serving;
+      document.getElementById("callAgainBtn").disabled = !serving;
+      document.getElementById("markDoneBtn").disabled = !serving;
+      document.getElementById("noShowBtn").disabled = !serving;
+
+      // Transfer only if serving
+      document.getElementById("transferControls").style.display = serving ? "block" : "none";
+      document.getElementById("transferHint").style.display = serving ? "none" : "block";
+    }).getCounterStatus(counter);
+
+    google.script.run.withSuccessHandler(function(summary){
+      renderUpcoming(summary);
+    }).getUpcomingSummary(counter, 5);
+  }
+
+  // ------------------------------
+  // Actions
+  // ------------------------------
+  function callNext(){
+    const counter=document.getElementById("counter").value;
+    showLoading(true); toast("", "");
+
+    google.script.run.withSuccessHandler(function(msg){
+      showLoading(false);
+      clearChecklist();
+      toast("Called: " + msg, String(msg).toLowerCase().includes("no clients") ? "bad" : "ok");
+      refreshStatus();
+    }).withFailureHandler(function(err){
+      showLoading(false);
+      toast("Error: " + (err.message || err), "bad");
+    }).nextClient(counter);
+  }
+
+  function callAgain(){
+    const counter=document.getElementById("counter").value;
+    showLoading(true); toast("", "");
+
+    google.script.run.withSuccessHandler(function(res){
+      showLoading(false);
+      toast("Calling again: " + res.ticket, "ok");
+    }).withFailureHandler(function(err){
+      showLoading(false);
+      toast("Error: " + (err.message || err), "bad");
+    }).triggerRecall(counter);
+  }
+
+  function markDone(){
+    const counter=document.getElementById("counter").value;
+
+    if(currentStatus!=="Serving" || !currentTicket || currentTicket==="None" || currentTicket === "-"){
+      toast("No client is currently Serving.", "bad");
+      return;
+    }
+    const selected=getSelectedChecklist();
+    if(selected.length===0){
+      toast("Please tick at least one service availed.", "bad");
+      return;
+    }
+
+    showLoading(true); toast("", "");
+    google.script.run.withSuccessHandler(function(recordMsg){
+      google.script.run.withSuccessHandler(function(doneMsg){
+        showLoading(false);
+        toast(recordMsg + " | " + doneMsg, "ok");
+        clearChecklist();
+        refreshStatus();
+      }).withFailureHandler(function(err){
+        showLoading(false);
+        toast("Complete error: " + (err.message || err), "bad");
+      }).completeClient(counter);
+    }).withFailureHandler(function(err){
+      showLoading(false);
+      toast("Record error: " + (err.message || err), "bad");
+    }).recordChecklistAvailed(counter, currentTicket, selected);
+  }
+
+  function noShow(){
+    const counter=document.getElementById("counter").value;
+    if(currentStatus!=="Serving" || !currentTicket || currentTicket==="None" || currentTicket === "-"){
+      toast("No client is currently Serving.", "bad");
+      return;
+    }
+
+    showLoading(true); toast("", "");
+    google.script.run.withSuccessHandler(function(msg){
+      showLoading(false);
+      toast(msg, "ok");
+      clearChecklist();
+      refreshStatus();
+    }).withFailureHandler(function(err){
+      showLoading(false);
+      toast("No Show error: " + (err.message || err), "bad");
+    }).markNoShow(counter);
+  }
+
+  function transferClient(){
+    if(currentStatus!=="Serving" || !currentTicket || currentTicket==="None" || currentTicket === "-"){
+      toast("No serving ticket to transfer.", "bad");
+      return;
+    }
+
+    const fromCounter = document.getElementById("counter").value;
+    const toAgency = document.getElementById("transferAgency").value;
+
+    // ✅ Get selected checklist items
+    const selected = getSelectedChecklist();
+
+    showLoading(true); toast("", "");
+
+    // ✅ If staff ticked services, record them first (under CURRENT agency/counter)
+    const proceedTransfer = () => {
+      google.script.run.withSuccessHandler(function(msg){
+        showLoading(false);
+        toast(msg, "ok");
+        clearChecklist();          // optional: reset checklist
+        refreshStatus();
+      }).withFailureHandler(function(err){
+        showLoading(false);
+        toast("Transfer error: " + (err.message || err), "bad");
+      }).transferClientSameTicket(currentTicket, fromCounter, toAgency);
+    };
+
+    if(selected.length > 0){
+      google.script.run.withSuccessHandler(function(recordMsg){
+        toast(recordMsg, "ok"); // show record success
+        proceedTransfer();
+      }).withFailureHandler(function(err){
+        showLoading(false);
+        toast("Record error before transfer: " + (err.message || err), "bad");
+      }).recordChecklistAvailed(fromCounter, currentTicket, selected);
+    } else {
+      // if nothing selected, just transfer
+      proceedTransfer();
+    }
+  }
+
+  // ------------------------------
+  // Calendar (hide/show + save + view)
+  // ------------------------------
+  function toggleCalendar(){
+    const sec=document.getElementById("calendarSection");
+    const btn=document.getElementById("calendarToggle");
+    const hidden = sec.classList.toggle("hidden");
+    btn.textContent = hidden ? "Show" : "Hide";
+  }
+
+  function saveCalendar(){
+    const counter=document.getElementById("counter").value;
+    const date=document.getElementById("eventDate").value;
+    const type=document.getElementById("eventType").value.trim();
+    const note=document.getElementById("eventNote").value.trim();
+
+    if(!date){ document.getElementById("calMsg").textContent="Please select date."; return; }
+    if(!type && !note){ document.getElementById("calMsg").textContent="Please type event/notice."; return; }
+
+    document.getElementById("calMsg").textContent="Saving…";
+    google.script.run.withSuccessHandler(function(msg){
+      document.getElementById("calMsg").textContent = msg;
+      document.getElementById("eventType").value="";
+      document.getElementById("eventNote").value="";
+      loadCalendar();
+    }).withFailureHandler(function(err){
+      document.getElementById("calMsg").textContent = "Error: " + (err.message || err);
+    }).addAgencyCalendarEvent(counter, date, type, note);
+  }
+
+  function escapeHtml(str){
+    return String(str)
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function loadCalendar(){
+    const from = document.getElementById("calFrom").value;
+    const to = document.getElementById("calTo").value;
+
+    document.getElementById("calCount").textContent = "Loading…";
+
+    google.script.run.withSuccessHandler(function(events){
+
+      const list = document.getElementById("calendarList");
+      list.innerHTML = "";
+
+      if(!events || events.length === 0){
+        list.innerHTML = `<div class="muted">No calendar events found.</div>`;
+        document.getElementById("calCount").textContent = "";
+        return;
+      }
+
+      // ✅ SORT CHRONOLOGICALLY
+      events.sort(function(a,b){
+        return new Date(a.date) - new Date(b.date);
+      });
+
+      document.getElementById("calCount").textContent = `(${events.length} shown)`;
+
+      events.forEach(ev=>{
+
+        // ✅ CLEAN DATE (remove time + timezone)
+        const d = new Date(ev.date);
+        const cleanDate = d.toDateString();
+
+        const div = document.createElement("div");
+        div.className = "listItem";
+
+        div.innerHTML = `
+          <div>
+            <b>${cleanDate}</b>
+            <div class="muted">${escapeHtml(ev.agency)} • ${escapeHtml(ev.counter)} • ${escapeHtml(ev.type || "")}</div>
+            <div style="margin-top:6px;">${escapeHtml(ev.notice || "")}</div>
+          </div>
+        `;
+
+        list.appendChild(div);
+      });
+
+    }).withFailureHandler(function(err){
+      document.getElementById("calCount").textContent = "Error loading calendar.";
+    }).getCalendarEvents(from || null, to || null, 80);
+  }
+
+  // ------------------------------
+  // Init
+  // ------------------------------
+  document.addEventListener("DOMContentLoaded", function(){
+    buildCounters();
+    loadTransferAgencies();
+
+    // default event date today
+    const today = new Date();
+    const todayISO = today.toISOString().slice(0,10);
+    document.getElementById("eventDate").value = todayISO;
+
+    // default overall calendar range: today to +30 days
+    const plus30 = new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0,10);
+    document.getElementById("calFrom").value = todayISO;
+    document.getElementById("calTo").value = plus30;
+
+    document.getElementById("counter").addEventListener("change", function(){
+      clearChecklist();
+      loadChecklistConfig();
+      refreshStatus();
+    });
+
+    loadChecklistConfig();
+    refreshStatus();
+    loadCalendar();
+    setInterval(refreshStatus, 3000);
+  });
+</script>
+</body>
+</html>

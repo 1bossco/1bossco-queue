@@ -1,0 +1,796 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8"/>
+  <title>1BOSSCO Display</title>
+
+  <style>
+    :root{
+      --bg:#0b1220;
+      --bg2:#060a14;
+      --card: rgba(255,255,255,.06);
+      --line: rgba(255,255,255,.10);
+      --text:#e8eefc;
+      --muted:#a9b4c7;
+      --accent:#22c55e;
+      --warn:#f59e0b;
+      --bad:#ef4444;
+      --info:#60a5fa;
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --controlBg: rgba(255,255,255,.06);
+      --controlText: #e8eefc;
+    }
+
+    [data-theme="light"]{
+      --bg:#f4f6fb;
+      --bg2:#eef2ff;
+      --card:#ffffff;
+      --line: rgba(0,0,0,.10);
+      --text:#0b1220;
+      --muted:#334155;
+      --shadow: 0 18px 40px rgba(0,0,0,.10);
+      --controlBg:#ffffff;
+      --controlText:#0b1220;
+    }
+
+    html,body{
+      height:100%;
+      margin:0;
+      font-family: Arial, sans-serif;
+      background: radial-gradient(1200px 700px at 10% 10%, #1a2b58 0%, var(--bg) 46%, var(--bg2) 100%);
+      color:var(--text);
+      overflow:hidden;
+    }
+
+    .screen{
+      height:100vh;
+      width:100vw;
+      display:grid;
+      grid-template-columns: 38% 62%;
+      gap: 1.2vw;
+      padding: 1.2vw;
+      box-sizing:border-box;
+    }
+
+    .panel{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius: 1.2vw;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      min-height:0;
+    }
+
+    [data-theme="light"] .panel{
+      background: var(--card);
+    }
+
+    .panelHead{
+      padding: 1.1vw 1.2vw;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.16);
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:1vw;
+      flex-wrap:wrap;
+    }
+
+    [data-theme="light"] .panelHead{
+      background: rgba(0,0,0,.03);
+    }
+
+    .title{
+      font-size: 2.1vw;
+      font-weight: 1000;
+      letter-spacing: .6px;
+    }
+
+    .sub{
+      font-size: 1.05vw;
+      color: var(--muted);
+      font-weight: 800;
+    }
+
+    .controls{
+      display:flex;
+      gap: .7vw;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    button{
+      padding: .7vw 1vw;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      background: var(--controlBg);
+      color: var(--controlText);
+      font-weight: 1000;
+      font-size: 1.05vw;
+      cursor:pointer;
+    }
+
+    button:active{transform:scale(.99);}
+
+    .content{
+      padding: 1.2vw;
+      display:flex;
+      flex-direction:column;
+      gap: 1vw;
+      min-height:0;
+      height:100%;
+    }
+
+    .card{
+      border:1px solid var(--line);
+      border-radius: 1.2vw;
+      background: rgba(255,255,255,.05);
+      padding: 1vw;
+      min-height:0;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      gap:.8vw;
+      height:100%;
+    }
+
+    [data-theme="light"] .card{
+      background:#f8fafc;
+    }
+
+    .hero{
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      text-align:center;
+      flex:1;
+      gap: .7vw;
+      border:1px solid var(--line);
+      border-radius: 1.2vw;
+      background:
+        radial-gradient(circle at top, rgba(34,197,94,.16), transparent 45%),
+        rgba(255,255,255,.04);
+      padding: 1.5vw;
+      min-height:0;
+    }
+
+    [data-theme="light"] .hero{
+      background:
+        radial-gradient(circle at top, rgba(34,197,94,.10), transparent 45%),
+        #ffffff;
+    }
+
+    .heroCounter{
+      font-size: 2.1vw;
+      font-weight: 1000;
+      color: var(--muted);
+      letter-spacing: 1px;
+    }
+
+    .heroTicket{
+      font-size: 6.2vw;
+      line-height: 1;
+      font-weight: 1000;
+      letter-spacing: .15vw;
+      word-break: break-word;
+    }
+
+    .heroService{
+      font-size: 1.7vw;
+      font-weight: 900;
+      max-width: 95%;
+    }
+
+    .heroStatus{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding: .7vw 1.2vw;
+      border-radius: 999px;
+      border:1px solid var(--line);
+      font-size: 1.2vw;
+      font-weight: 1000;
+      background: rgba(255,255,255,.06);
+    }
+
+    .heroHint{
+      font-size: 1vw;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    table{
+      width:100%;
+      border-collapse: collapse;
+      font-size: 1.28vw;
+    }
+
+    th, td{
+      border-bottom:1px solid var(--line);
+      padding: .82vw .7vw;
+      text-align:left;
+      vertical-align:middle;
+    }
+
+    th{
+      font-size: 1.05vw;
+      color: var(--muted);
+      font-weight: 1000;
+      letter-spacing:.4px;
+      position: sticky;
+      top: 0;
+      background: rgba(6,10,20,.96);
+      z-index: 2;
+    }
+
+    [data-theme="light"] th{
+      background: rgba(255,255,255,.98);
+    }
+
+    .servingTag{
+      font-weight:1000;
+      color: var(--accent);
+    }
+
+    .waitingTag{
+      font-weight:1000;
+      color: var(--info);
+    }
+
+    .completedTag{
+      font-weight:1000;
+      color: var(--warn);
+    }
+
+    .noshowTag{
+      font-weight:1000;
+      color: var(--bad);
+    }
+
+    .idleTag{
+      color: var(--muted);
+      font-weight:900;
+    }
+
+    .lastcalledTag{
+      color: var(--warn);
+      font-weight: 1000;
+    }
+
+    .scrollArea{
+      overflow:auto;
+      min-height:0;
+      height:100%;
+    }
+
+    .scrollArea::-webkit-scrollbar{
+      width:0;
+      height:0;
+    }
+
+    .footerLine{
+      margin-top:auto;
+      display:flex;
+      justify-content:space-between;
+      gap:1vw;
+      color:var(--muted);
+      font-size: 1.0vw;
+      font-weight: 900;
+      padding-top: .5vw;
+      border-top:1px solid var(--line);
+      flex-wrap:wrap;
+    }
+
+    @keyframes flashCall {
+      0% { box-shadow: 0 0 0 rgba(34,197,94,0); }
+      20% { box-shadow: 0 0 0.8vw rgba(34,197,94,.55); }
+      40% { box-shadow: 0 0 0 rgba(34,197,94,0); }
+      60% { box-shadow: 0 0 0.8vw rgba(34,197,94,.55); }
+      80% { box-shadow: 0 0 0 rgba(34,197,94,0); }
+      100% { box-shadow: 0 0 0 rgba(34,197,94,0); }
+    }
+
+    .flashRow{
+      animation: flashCall 3s ease;
+    }
+
+    .heroFlash{
+      animation: flashCall 3s ease;
+    }
+
+    @media (max-width: 1000px){
+      .screen{
+        grid-template-columns: 1fr;
+        grid-template-rows: 42% 58%;
+      }
+
+      .title{ font-size: 5vw; }
+      .sub{ font-size: 2.7vw; }
+      button{ font-size: 3.2vw; padding: 2vw 3vw; }
+      .heroCounter{ font-size: 4vw; }
+      .heroTicket{ font-size: 12vw; }
+      .heroService{ font-size: 4vw; }
+      .heroStatus{ font-size: 3vw; padding: 1.6vw 3vw; }
+      .heroHint{ font-size: 2.3vw; }
+      table{ font-size: 2.8vw; }
+      th{ font-size: 2.6vw; }
+      .footerLine{ font-size: 2.2vw; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="screen">
+    <!-- LEFT: BIG CURRENT / LAST CALLED -->
+    <div class="panel">
+      <div class="panelHead">
+        <div>
+          <div class="title">📢 NOW CALLING</div>
+          <div class="sub">Last called ticket stays visible until the next client is called</div>
+        </div>
+        <div class="controls">
+          <button id="soundBtn" onclick="enableSound()">🔊 Enable Voice</button>
+          <button id="themeBtn" onclick="toggleTheme()">🌙 Night</button>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="hero" id="heroBox">
+          <div class="heroCounter" id="heroCounter">Counter —</div>
+          <div class="heroTicket" id="heroTicket">—</div>
+          <div class="heroService" id="heroService">Waiting for next call</div>
+          <div class="heroStatus" id="heroStatus">Idle</div>
+          <div class="heroHint" id="heroHint">Voice announcement is off</div>
+        </div>
+
+        <div class="footerLine">
+          <div id="lastUpdate">Last update: —</div>
+          <div id="heroMeta">Latest called number on screen</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: ACTIVE COUNTERS -->
+    <div class="panel">
+      <div class="panelHead">
+        <div>
+          <div class="title">🧾 ACTIVE COUNTERS</div>
+          <div class="sub">Shows current serving ticket and keeps last called visible after completion</div>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="card">
+          <div class="sub" id="activeCountersTitle">Active Counters</div>
+
+          <div class="scrollArea">
+            <table id="countersTable">
+              <thead>
+                <tr>
+                  <th style="width:18%;">Counter</th>
+                  <th style="width:22%;">Ticket</th>
+                  <th style="width:35%;">Service</th>
+                  <th style="width:25%;">Status</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+
+          <div class="footerLine">
+            <div id="counts">—</div>
+            <div id="voiceState">Voice: Off</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // =========================
+  // THEME
+  // =========================
+  function applyTheme(theme){
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("displayTheme", theme);
+    const btn = document.getElementById("themeBtn");
+    if(btn) btn.textContent = (theme === "light") ? "🌙 Night" : "☀️ Day";
+  }
+
+  function toggleTheme(){
+    const cur = document.documentElement.getAttribute("data-theme") || "dark";
+    applyTheme(cur === "dark" ? "light" : "dark");
+  }
+
+  (function initTheme(){
+    const saved = localStorage.getItem("displayTheme");
+    if(saved){
+      applyTheme(saved);
+      return;
+    }
+    const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+    applyTheme(prefersLight ? "light" : "dark");
+  })();
+
+  // =========================
+  // STATE
+  // =========================
+  let soundEnabled = false;
+  let lastSeenServingTicketByCounter = {};
+  let lastRecallTsByCounter = {};
+  let flashUntilByCounter = {};
+  let persistedLastCalledByCounter = {};
+  let speakingNow = false;
+
+  // =========================
+  // SOUND
+  // =========================
+  function enableSound(){
+    soundEnabled = true;
+    document.getElementById("soundBtn").style.display = "none";
+    document.getElementById("voiceState").textContent = "Voice: On";
+    document.getElementById("heroHint").textContent = "Voice announcement is on";
+
+    try {
+      window.speechSynthesis.cancel();
+      const test = new SpeechSynthesisUtterance("Voice announcements enabled.");
+      test.volume = 1;
+      test.rate = 1;
+      test.pitch = 1;
+      window.speechSynthesis.speak(test);
+    } catch (e) {}
+  }
+
+  function getBestVoice(){
+    const voices = window.speechSynthesis.getVoices() || [];
+    if(!voices.length) return null;
+
+    let voice =
+      voices.find(v =>
+        v.lang && v.lang.toLowerCase().startsWith("en") &&
+        (
+          String(v.name || "").toLowerCase().includes("female") ||
+          ["Samantha","Google UK English Female","Microsoft Zira Desktop","Zira","Susan","Jenny"]
+            .some(n => String(v.name || "").includes(n))
+        )
+      ) ||
+      voices.find(v => v.lang && v.lang.toLowerCase().startsWith("en-us")) ||
+      voices.find(v => v.lang && v.lang.toLowerCase().startsWith("en")) ||
+      voices[0];
+
+    return voice || null;
+  }
+
+  function speakOnce(text, callback){
+    try{
+      const utter = new SpeechSynthesisUtterance(text);
+      const voice = getBestVoice();
+      if(voice) utter.voice = voice;
+      utter.volume = 1;
+      utter.rate = 0.95;
+      utter.pitch = 1;
+      utter.onend = function(){
+        if(callback) callback();
+      };
+      utter.onerror = function(){
+        if(callback) callback();
+      };
+      window.speechSynthesis.speak(utter);
+    }catch(e){
+      if(callback) callback();
+    }
+  }
+
+  function announce(ticket, service, counter) {
+    if(!soundEnabled || !ticket || ticket === "-" || ticket === "None") return;
+    if(speakingNow) return;
+
+    speakingNow = true;
+
+    const cleanTicket = String(ticket).replace(/-/g, " ");
+    const text1 = `${service}. Ticket ${cleanTicket}. Please proceed to ${counter}.`;
+    const text2 = `Now serving. Ticket ${cleanTicket}. ${counter}.`;
+
+    try{
+      window.speechSynthesis.cancel();
+    }catch(e){}
+
+    const runSpeak = function(){
+      speakOnce(text1, function(){
+        setTimeout(function(){
+          speakOnce(text2, function(){
+            speakingNow = false;
+          });
+        }, 350);
+      });
+    };
+
+    const voices = window.speechSynthesis.getVoices();
+    if(!voices || voices.length === 0){
+      const prev = window.speechSynthesis.onvoiceschanged;
+      window.speechSynthesis.onvoiceschanged = function(){
+        if(typeof prev === "function") prev();
+        runSpeak();
+        window.speechSynthesis.onvoiceschanged = prev || null;
+      };
+      setTimeout(function(){
+        if(speakingNow) runSpeak();
+      }, 700);
+    } else {
+      runSpeak();
+    }
+  }
+
+  // Prime voice list for some browsers
+  if(window.speechSynthesis){
+    window.speechSynthesis.getVoices();
+  }
+
+  // =========================
+  // HELPERS
+  // =========================
+  function escapeHtml(str){
+    return String(str || "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
+  }
+
+  function statusClass(status){
+    const s = String(status || "").toLowerCase();
+    if(s === "serving") return "servingTag";
+    if(s === "waiting") return "waitingTag";
+    if(s === "completed") return "completedTag";
+    if(s === "no show") return "noshowTag";
+    if(s === "last called") return "lastcalledTag";
+    return "idleTag";
+  }
+
+  function normalizeCounterRow(row){
+    return {
+      counter: row[0] || "",
+      ticket: row[1] || "-",
+      service: row[2] || "-",
+      status: row[3] || "Idle"
+    };
+  }
+
+  function sortCounters(rows){
+    return rows.sort((a,b)=>{
+      const aNum = Number(String(a.counter).replace(/[^\d]/g,"")) || 9999;
+      const bNum = Number(String(b.counter).replace(/[^\d]/g,"")) || 9999;
+      return aNum - bNum;
+    });
+  }
+
+  // IMPORTANT:
+  // Keep last called visible even when backend already cleared counter after Mark Done / No Show.
+  function applyPersistentLastCalled(counterRows){
+    const output = [];
+
+    counterRows.forEach(row=>{
+      const counter = row.counter;
+      const ticket = row.ticket;
+      const service = row.service;
+      const status = row.status;
+
+      const isServing = status === "Serving" && ticket && ticket !== "-" && ticket !== "None";
+      const isMeaningful = ticket && ticket !== "-" && ticket !== "None";
+
+      if(isServing){
+        persistedLastCalledByCounter[counter] = {
+          counter: counter,
+          ticket: ticket,
+          service: service || "-",
+          status: "Serving"
+        };
+        output.push({
+          counter: counter,
+          ticket: ticket,
+          service: service || "-",
+          status: "Serving"
+        });
+        return;
+      }
+
+      if(isMeaningful){
+        // if sheet still has a real ticket, keep it
+        persistedLastCalledByCounter[counter] = {
+          counter: counter,
+          ticket: ticket,
+          service: service || "-",
+          status: status || "Last Called"
+        };
+        output.push({
+          counter: counter,
+          ticket: ticket,
+          service: service || "-",
+          status: status || "Last Called"
+        });
+        return;
+      }
+
+      // if cleared to "-" and Idle, show remembered last called
+      if(persistedLastCalledByCounter[counter]){
+        output.push({
+          counter: counter,
+          ticket: persistedLastCalledByCounter[counter].ticket || "-",
+          service: persistedLastCalledByCounter[counter].service || "-",
+          status: "Last Called"
+        });
+      } else {
+        output.push({
+          counter: counter,
+          ticket: "-",
+          service: "-",
+          status: "Idle"
+        });
+      }
+    });
+
+    return sortCounters(output);
+  }
+
+  function pickHeroRow(rows){
+    if(!rows || !rows.length){
+      return { counter:"Counter —", ticket:"—", service:"Waiting for next call", status:"Idle" };
+    }
+
+    const serving = rows.filter(r => r.status === "Serving" && r.ticket && r.ticket !== "-" && r.ticket !== "None");
+    if(serving.length){
+      return serving[0];
+    }
+
+    const lastCalled = rows.filter(r => r.ticket && r.ticket !== "-" && r.ticket !== "None");
+    if(lastCalled.length){
+      return lastCalled[0];
+    }
+
+    return { counter:"Counter —", ticket:"—", service:"Waiting for next call", status:"Idle" };
+  }
+
+  function renderHero(row){
+    const box = document.getElementById("heroBox");
+    document.getElementById("heroCounter").textContent = row.counter || "Counter —";
+    document.getElementById("heroTicket").textContent = row.ticket || "—";
+    document.getElementById("heroService").textContent = row.service || "-";
+
+    const statusText = row.status || "Idle";
+    const statusEl = document.getElementById("heroStatus");
+    statusEl.textContent = statusText;
+    statusEl.className = "heroStatus " + statusClass(statusText);
+
+    if(flashUntilByCounter[row.counter] && flashUntilByCounter[row.counter] > Date.now()){
+      box.classList.remove("heroFlash");
+      void box.offsetWidth;
+      box.classList.add("heroFlash");
+    } else {
+      box.classList.remove("heroFlash");
+    }
+
+    let meta = "Latest called number on screen";
+    if(statusText === "Serving"){
+      meta = "Currently being served";
+    } else if(statusText === "Last Called"){
+      meta = "Still shown until next client is called";
+    } else if(statusText === "No Show"){
+      meta = "Last called ticket shown";
+    } else if(statusText === "Completed"){
+      meta = "Last completed ticket shown";
+    }
+    document.getElementById("heroMeta").textContent = meta;
+  }
+
+  function renderCounters(rows){
+    const tbody = document.querySelector("#countersTable tbody");
+    tbody.innerHTML = "";
+
+    const filtered = rows.filter(r=>{
+      return r.status === "Serving" || (r.ticket && r.ticket !== "-" && r.ticket !== "None");
+    });
+
+    if(!filtered.length){
+      const tr = document.createElement("tr");
+      tr.innerHTML = `<td colspan="4" class="idleTag">No counters to display.</td>`;
+      tbody.appendChild(tr);
+      return;
+    }
+
+    const now = Date.now();
+
+    filtered.forEach(row=>{
+      const tr = document.createElement("tr");
+
+      if(flashUntilByCounter[row.counter] && flashUntilByCounter[row.counter] > now){
+        tr.classList.add("flashRow");
+      }
+
+      tr.innerHTML = `
+        <td><b>${escapeHtml(row.counter)}</b></td>
+        <td><b>${escapeHtml(row.ticket || "-")}</b></td>
+        <td>${escapeHtml(row.service || "-")}</td>
+        <td class="${statusClass(row.status)}">${escapeHtml(row.status || "Idle")}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // =========================
+  // DATA FLOW
+  // =========================
+  function processAnnouncements(rows){
+    rows
+      .filter(r => r.status === "Serving" && r.ticket && r.ticket !== "-" && r.ticket !== "None")
+      .forEach(r => {
+        if(lastSeenServingTicketByCounter[r.counter] !== r.ticket){
+          lastSeenServingTicketByCounter[r.counter] = r.ticket;
+          persistedLastCalledByCounter[r.counter] = {
+            counter: r.counter,
+            ticket: r.ticket,
+            service: r.service || "-",
+            status: "Serving"
+          };
+          flashUntilByCounter[r.counter] = Date.now() + 3000;
+          announce(r.ticket, r.service || "Service", r.counter || "Counter");
+        }
+      });
+  }
+
+  function processRecalls(){
+    google.script.run.withSuccessHandler(function(recalls){
+      (recalls || []).forEach(r => {
+        if(!r || !r.counter || !r.ticket || !r.ts) return;
+
+        if(lastRecallTsByCounter[r.counter] !== r.ts){
+          lastRecallTsByCounter[r.counter] = r.ts;
+          flashUntilByCounter[r.counter] = Date.now() + 3000;
+
+          // also keep this ticket as last called in screen memory
+          persistedLastCalledByCounter[r.counter] = {
+            counter: r.counter,
+            ticket: r.ticket,
+            service: r.service || "-",
+            status: "Serving"
+          };
+
+          announce(r.ticket, r.service || "Service", r.counter || "Counter");
+        }
+      });
+    }).getRecallSignals();
+  }
+
+  function refreshAll(){
+    document.getElementById("lastUpdate").textContent = "Last update: " + new Date().toLocaleTimeString();
+
+    google.script.run.withSuccessHandler(function(counterData){
+      const rawCounterRows = (counterData || []).slice(1).map(normalizeCounterRow);
+      const displayRows = applyPersistentLastCalled(rawCounterRows);
+
+      processAnnouncements(displayRows);
+      processRecalls();
+      renderCounters(displayRows);
+      renderHero(pickHeroRow(displayRows));
+
+      const visibleCount = displayRows.filter(r => r.ticket && r.ticket !== "-" && r.ticket !== "None").length;
+      const servingCount = displayRows.filter(r => r.status === "Serving").length;
+      const lastCalledCount = displayRows.filter(r => r.status === "Last Called").length;
+
+      document.getElementById("activeCountersTitle").textContent = `Active Counters (${visibleCount})`;
+      document.getElementById("counts").textContent = `Serving: ${servingCount} • Last Called: ${lastCalledCount}`;
+    }).getCounters();
+  }
+
+  // =========================
+  // INIT
+  // =========================
+  setInterval(refreshAll, 1500);
+  refreshAll();
+</script>
+</body>
+</html>

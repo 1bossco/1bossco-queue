@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8"/>
+  <title>1BOSSCO Queuing - Client</title>
+
+  <style>
+    /* ------------------------------
+      Theme system (Light/Dark)
+    ------------------------------ */
+    :root{
+      --bg:#0b1220; --bg2:#060a14;
+      --card: rgba(255,255,255,.07);
+      --line: rgba(255,255,255,.10);
+      --text:#e8eefc; --muted:#a9b4c7;
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --radius: 18px;
+
+      /* Controls (dropdown/input/button backgrounds + text) */
+      --controlBg: rgba(255,255,255,.06);
+      --controlText: #e8eefc;
+      --btnBg: rgba(34,197,94,.18);
+      --btnLine: rgba(34,197,94,.35);
+    }
+
+    /* Light mode variables */
+    [data-theme="light"]{
+      --bg:#f4f6fb; --bg2:#eef2ff;
+      --card: rgba(0,0,0,.04);
+      --line: rgba(0,0,0,.10);
+      --text:#0b1220; --muted:#334155;
+      --shadow: 0 18px 40px rgba(0,0,0,.10);
+
+      /* In light mode: dropdown bg white, text black (readable) */
+      --controlBg: #ffffff;
+      --controlText: #0b1220;
+
+      --btnBg: rgba(34,197,94,.18);
+      --btnLine: rgba(34,197,94,.35);
+    }
+
+    html,body{
+      margin:0;
+      font-family: Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+
+    /* Remove gradient in light mode */
+    [data-theme="light"] html,
+    [data-theme="light"] body{
+      background: var(--bg);
+    }
+
+    .wrap{
+      width:min(860px,96vw);
+      margin:0 auto;
+      padding:18px 0 28px;
+      display:grid;
+      gap:14px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03));
+      border:1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    [data-theme="light"] .card{
+      background: #ffffff;
+    }
+
+    .head{
+      padding:12px 14px;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.10);
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    [data-theme="light"] .head{
+      background: rgba(0,0,0,.03);
+    }
+
+    h2{margin:0;font-size:22px;}
+    .muted{color:var(--muted);font-size:13px;margin-top:6px;}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0;}
+    label{font-weight:900;color:var(--muted);font-size:13px;}
+
+    /* Controls */
+    select, button{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid var(--line);
+      background: var(--controlBg);
+      color: var(--controlText);
+      font-size:14px;
+      outline:none;
+    }
+
+    /* Ensure the dropdown options follow readability too */
+    select option{
+      color: var(--controlText);
+      background: var(--controlBg);
+    }
+
+    select{
+      color:#000;
+      background:#fff;
+    }
+
+    select option{
+      color:#000 !important;
+      background:#fff !important;
+    }
+
+    button{
+      cursor:pointer;
+      font-weight:1000;
+      background: var(--btnBg);
+      border-color: var(--btnLine);
+      color: var(--text);
+    }
+    button:disabled{opacity:.55;cursor:not-allowed;}
+
+    .box{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.05);
+      border-radius:14px;
+      padding:12px;
+    }
+    [data-theme="light"] .box{ background: #f8fafc; }
+
+    .big{font-size:34px;font-weight:1000;letter-spacing:1px;}
+    .pill{
+      display:inline-flex;
+      gap:10px;
+      align-items:center;
+      padding:10px 12px;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.06);
+    }
+    [data-theme="light"] .pill{ background:#ffffff; }
+
+    input[type="checkbox"]{transform:scale(1.15);}
+
+    /* Theme toggle button */
+    .toggleBtn{
+      background: rgba(59,130,246,.18);
+      border-color: rgba(59,130,246,.35);
+      color: var(--text);
+      font-weight:1000;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="head">
+        <div>
+          <h2>1BOSSCO Queuing System</h2>
+          <div class="muted">Select agency, gender, and priority (if applicable). Then get your ticket.</div>
+        </div>
+
+        <button class="toggleBtn" id="themeToggle" onclick="toggleTheme()">🌙 Night</button>
+      </div>
+
+      <div class="body" style="padding:14px;">
+        <div class="row">
+          <label>Agency</label>
+          <select id="agency" style="min-width:260px;"></select>
+        </div>
+
+        <div class="row">
+          <label>Gender</label>
+          <select id="gender">
+            <option value="">Select…</option>
+            <option value="Male">Male</option>
+            <option value="Female">Female</option>
+          </select>
+
+          <span class="pill">
+            <input type="checkbox" id="priority">
+            <label for="priority" style="margin:0;color:var(--text);">Priority</label>
+          </span>
+        </div>
+
+        <div class="row">
+          <button id="getTicketBtn" onclick="getTicket()">Get Ticket</button>
+          <span id="loading" class="muted" style="display:none;">Processing…</span>
+        </div>
+
+        <div id="ticketBox" class="box" style="display:none;">
+          <div class="muted">Your Queue Number</div>
+          <div class="big" id="ticketNo">—</div>
+          <div class="muted">Service / Agency: <b id="ticketSvc">—</b></div>
+          <div class="muted">Proceed to: <b id="ticketCounter">—</b></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ------------------------------
+  // Theme (Day/Night) with memory
+  // ------------------------------
+  function applyTheme(theme){
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("clientTheme", theme);
+    const btn = document.getElementById("themeToggle");
+    if(theme === "light"){
+      btn.textContent = "🌙 Night";
+    } else {
+      btn.textContent = "☀️ Day";
+    }
+  }
+
+  function toggleTheme(){
+    const current = document.documentElement.getAttribute("data-theme") || "dark";
+    applyTheme(current === "dark" ? "light" : "dark");
+  }
+
+  (function initTheme(){
+    const saved = localStorage.getItem("clientTheme");
+    if(saved){
+      applyTheme(saved);
+      return;
+    }
+    // Default based on device preference; fallback to dark
+    const prefersLight = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches;
+    applyTheme(prefersLight ? "light" : "dark");
+  })();
+
+  // ------------------------------
+  // Load agencies without duplicates
+  // ------------------------------
+  function loadAgencies(){
+    google.script.run.withSuccessHandler(function(list){
+      // list may contain duplicates because AgencyCounters has multiple rows per agency
+      // We dedupe by agency name while keeping lowest sort (so ordering stays stable).
+      const map = new Map();
+
+      (list || []).forEach(x=>{
+        const name = x.agency;
+        if(!name) return;
+
+        if(!map.has(name)){
+          map.set(name, x);
+          return;
+        }
+        // keep the one with smaller sort value
+        const existing = map.get(name);
+        if((Number(x.sort)||999) < (Number(existing.sort)||999)){
+          map.set(name, x);
+        }
+      });
+
+      const unique = Array.from(map.values())
+        .sort((a,b)=>(Number(a.sort)||999)-(Number(b.sort)||999) || String(a.agency).localeCompare(String(b.agency)));
+
+      const sel = document.getElementById("agency");
+      sel.innerHTML = "";
+      unique.forEach(x=>{
+        const o = document.createElement("option");
+        o.value = x.agency;
+        o.textContent = x.agency;
+        sel.appendChild(o);
+      });
+    }).getClientAgencyOptions();
+  }
+
+  // ------------------------------
+  // Ticket generation
+  // ------------------------------
+  function getTicket(){
+    const agency = document.getElementById("agency").value;
+    const gender = document.getElementById("gender").value;
+    const isPriority = document.getElementById("priority").checked;
+
+    if(!agency){ alert("Please select an agency."); return; }
+    if(!gender){ alert("Please select gender."); return; }
+
+    const btn = document.getElementById("getTicketBtn");
+    btn.disabled = true;
+    document.getElementById("loading").style.display = "inline";
+    document.getElementById("ticketBox").style.display = "none";
+
+    google.script.run
+      .withSuccessHandler(function(result){
+        btn.disabled = false;
+        document.getElementById("loading").style.display = "none";
+
+        document.getElementById("ticketBox").style.display = "block";
+        document.getElementById("ticketNo").textContent = result.ticket;
+        document.getElementById("ticketSvc").textContent = result.service;
+        document.getElementById("ticketCounter").textContent = result.counter;
+
+        printTicket(result.ticket, result.service, result.counter);
+      })
+      .withFailureHandler(function(err){
+        btn.disabled = false;
+        document.getElementById("loading").style.display = "none";
+        alert("ERROR: " + (err && err.message ? err.message : err));
+      })
+      .generateTicketFromAgency(agency, gender, isPriority);
+  }
+
+  function printTicket(ticket, service, counter) {
+    let win = window.open("", "PRINT", "width=300,height=600");
+    win.document.write(`
+      <html>
+      <head>
+        <style>
+          @media print { body { margin: 0; } }
+          body { font-family: Arial; text-align: center; width: 58mm; }
+          h1 { font-size: 26px; margin: 10px 0; }
+          h2 { font-size: 16px; margin: 5px 0; }
+          p  { font-size: 14px; margin: 3px 0; }
+          .line { border-top: 1px dashed #000; margin: 8px 0; }
+        </style>
+      </head>
+      <body onload="window.print(); setTimeout(() => window.close(), 500);">
+        <h2>1BOSSCO</h2>
+        <div class="line"></div>
+        <p>Queue Number</p>
+        <h1>${ticket}</h1>
+        <div class="line"></div>
+        <p><b>${service}</b></p>
+        <p>Proceed to</p>
+        <h2>${counter}</h2>
+        <div class="line"></div>
+        <p>${new Date().toLocaleString()}</p>
+      </body>
+      </html>
+    `);
+    win.document.close();
+    win.focus();
+  }
+
+  loadAgencies();
+</script>
+</body>
+</html>

@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="UTF-8"/>
+  <title>Admin Dashboard</title>
+  <script src="https://www.gstatic.com/charts/loader.js"></script>
+  <style>
+    :root{
+      --bg:#0b1220; --bg2:#060a14;
+      --card: rgba(255,255,255,.07);
+      --line: rgba(255,255,255,.10);
+      --text:#e8eefc; --muted:#a9b4c7;
+      --shadow: 0 18px 40px rgba(0,0,0,.35);
+      --radius: 18px;
+    }
+    html,body{margin:0;font-family:Arial,sans-serif;background:radial-gradient(1200px 700px at 10% 10%, #1a2b58 0%, var(--bg) 46%, var(--bg2) 100%);color:var(--text);}
+    .wrap{width:min(1300px,96vw);margin:0 auto;padding:16px 0 28px;display:grid;gap:14px;}
+    .top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;padding:12px 14px;border:1px solid var(--line);border-radius:var(--radius);background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));box-shadow:var(--shadow);}
+    h1{margin:0;font-size:22px;}
+    .muted{color:var(--muted);font-size:13px;}
+    .tabs{display:flex;gap:10px;flex-wrap:wrap;}
+    .tab{cursor:pointer;padding:10px 12px;border-radius:999px;border:1px solid var(--line);background:rgba(255,255,255,.06);font-weight:900;}
+    .tab.active{background:rgba(34,197,94,.18);border-color:rgba(34,197,94,.35);}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;}
+    .head{padding:12px 14px;border-bottom:1px solid var(--line);background:rgba(0,0,0,.18);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;}
+    .body{padding:14px;}
+    .filters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+    select,input,button,textarea{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.06);color:var(--text);outline:none;font-size:14px;}
+    button{cursor:pointer;font-weight:1000;background:rgba(59,130,246,.18);}
+    .okBtn{background:rgba(34,197,94,.18);}
+    .smallBtn{background:rgba(245,158,11,.18);}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    @media(max-width:980px){.grid{grid-template-columns:1fr;}}
+    .kpi{font-size:34px;font-weight:1000;letter-spacing:1px;}
+    table{width:100%;border-collapse:collapse;}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);text-align:left;font-size:13px;}
+    th{color:#dbe6ff;font-weight:1000;background:rgba(255,255,255,.04);}
+    .toast{min-height:18px;color:var(--muted);font-size:13px;margin-top:8px;}
+    .toast.ok{color:#86efac;}
+    .toast.bad{color:#fca5a5;}
+    .hidden{display:none;}
+    textarea{width:100%;min-height:180px;}
+    select{color:#000;background:#fff;}
+    select option{color:#000 !important;background:#fff !important;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1>Admin Main Dashboard</h1>
+      <div class="muted">Reports + Config (real-time for Client & Staff)</div>
+    </div>
+    <div class="tabs">
+      <div class="tab active" data-tab="daily">Daily</div>
+      <div class="tab" data-tab="monthly">Monthly</div>
+      <div class="tab" data-tab="yearly">Yearly</div>
+      <div class="tab" data-tab="config">Config</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="head">
+      <b>Filters</b>
+      <div class="filters">
+        <span class="muted"><b>Agency</b></span>
+        <select id="agencyFilter"><option value="ALL">ALL</option></select>
+
+        <span class="muted"><b>Date</b></span>
+        <input type="date" id="datePick"/>
+
+        <span class="muted"><b>Month</b></span>
+        <input type="month" id="monthPick"/>
+
+        <span class="muted"><b>Year</b></span>
+        <select id="yearPick"></select>
+
+        <button onclick="refresh()">Refresh</button>
+      </div>
+    </div>
+    <div class="body">
+      <div class="muted">Daily uses Date • Monthly uses Month • Yearly uses Year.</div>
+      <div class="toast" id="toast"></div>
+    </div>
+  </div>
+
+  <div id="view-report">
+    <div class="grid">
+      <div class="card">
+        <div class="head"><b>Total Served</b></div>
+        <div class="body">
+          <div class="kpi" id="kpiTotal">—</div>
+          <div class="muted">Clients served (based on filters)</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="head"><b>Gender Breakdown</b></div>
+        <div class="body"><div id="chartGender" style="height:280px;"></div></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="card">
+        <div class="head">
+          <b>Top Services (Tickboxes)</b>
+          <button class="smallBtn" onclick="downloadTableCSV('tblServices','services_report.csv')">Download CSV</button>
+        </div>
+        <div class="body">
+          <div id="chartServices" style="height:320px;"></div>
+          <table id="tblServices">
+            <thead><tr><th>Service Item</th><th>Count</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="head">
+          <b>Agency Totals</b>
+          <button class="smallBtn" onclick="downloadTableCSV('tblAgencies','agency_report.csv')">Download CSV</button>
+        </div>
+        <div class="body">
+          <div id="chartAgencies" style="height:320px;"></div>
+          <table id="tblAgencies">
+            <thead><tr><th>Agency</th><th>Count</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-config" class="hidden">
+    <div class="grid">
+      <div class="card">
+        <div class="head">
+          <b>AgencyCounters</b>
+          <button class="okBtn" onclick="saveCounters()">Save</button>
+        </div>
+        <div class="body">
+          <div class="muted">TSV columns: CounterNo, AgencyName, ClientNormalCode, ClientPriorityCode, Active(TRUE/FALSE), SortOrder</div>
+          <textarea id="cfgCounters"></textarea>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="head">
+          <b>AgencyServices</b>
+          <button class="okBtn" onclick="saveServices()">Save</button>
+        </div>
+        <div class="body">
+          <div class="muted">TSV columns: AgencyName, ServiceItem, Active(TRUE/FALSE), SortOrder</div>
+          <textarea id="cfgServices"></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  google.charts.load('current', {'packages':['corechart']});
+  let activeTab = "daily";
+
+  document.querySelectorAll(".tab").forEach(t=>{
+    t.addEventListener("click", ()=>{
+      document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+      t.classList.add("active");
+      activeTab = t.dataset.tab;
+      document.getElementById("view-report").classList.toggle("hidden", activeTab==="config");
+      document.getElementById("view-config").classList.toggle("hidden", activeTab!=="config");
+      refresh();
+    });
+  });
+
+  function toast(msg, type){
+    const el = document.getElementById("toast");
+    el.textContent = msg || "";
+    el.className = "toast" + (type ? (" "+type) : "");
+  }
+
+  function fillYearPick(){
+    const ysel = document.getElementById("yearPick");
+    const yr = new Date().getFullYear();
+    ysel.innerHTML="";
+    for(let y=yr; y>=yr-5; y--){
+      const o=document.createElement("option");
+      o.value=y; o.textContent=y;
+      ysel.appendChild(o);
+    }
+  }
+
+  function setDefaults(){
+    const now=new Date();
+    document.getElementById("datePick").value = now.toISOString().slice(0,10);
+    document.getElementById("monthPick").value = now.toISOString().slice(0,7);
+  }
+
+  function loadAgencyDropdown(){
+    google.script.run.withSuccessHandler(function(rows){
+      const sel = document.getElementById("agencyFilter");
+      sel.innerHTML = `<option value="ALL">ALL</option>`;
+      const agencies = new Set();
+      for(let i=1;i<rows.length;i++){
+        if(rows[i][1]) agencies.add(rows[i][1]);
+      }
+      [...agencies].sort().forEach(a=>{
+        const o=document.createElement("option");
+        o.value=a; o.textContent=a;
+        sel.appendChild(o);
+      });
+    }).getAgencyCounters();
+  }
+
+  function refresh(){
+    if(activeTab==="config"){ loadConfig(); return; }
+
+    const agency = document.getElementById("agencyFilter").value;
+    const date = document.getElementById("datePick").value;
+    const ym = document.getElementById("monthPick").value;
+    const year = Number(document.getElementById("yearPick").value);
+
+    const month = ym ? Number(ym.split("-")[1]) : 0;
+
+    toast("Loading report…");
+    google.script.run.withSuccessHandler(function(res){
+      toast("Loaded.", "ok");
+      render(res);
+    }).withFailureHandler(function(err){
+      toast("Error: " + (err.message || err), "bad");
+    }).getAdminReport({
+      mode: activeTab,
+      agency: agency,
+      date: date,
+      year: year,
+      month: month
+    });
+  }
+
+  function render(res){
+    document.getElementById("kpiTotal").textContent = (res.summary && res.summary.total != null) ? res.summary.total : 0;
+
+    renderTable("tblServices", res.byService || []);
+    renderTable("tblAgencies", res.byAgency || []);
+
+    google.charts.setOnLoadCallback(()=>{
+      drawPie("chartGender", "Gender", res.byGender || []);
+      drawBar("chartServices", "Top Services", res.byService || []);
+      drawBar("chartAgencies", "Agencies", res.byAgency || []);
+    });
+  }
+
+  function renderTable(tableId, arr){
+    const tbody=document.querySelector("#"+tableId+" tbody");
+    tbody.innerHTML="";
+    arr.forEach(x=>{
+      const tr=document.createElement("tr");
+      tr.innerHTML=`<td>${x.name}</td><td><b>${x.count}</b></td>`;
+      tbody.appendChild(tr);
+    });
+  }
+
+  function drawPie(elId, title, arr){
+    const data=new google.visualization.DataTable();
+    data.addColumn('string','Name');
+    data.addColumn('number','Count');
+    arr.forEach(x=>data.addRow([x.name,x.count]));
+    const chart=new google.visualization.PieChart(document.getElementById(elId));
+    chart.draw(data,{title,backgroundColor:'transparent',legendTextStyle:{color:'#e8eefc'},titleTextStyle:{color:'#e8eefc'}});
+  }
+
+  function drawBar(elId, title, arr){
+    const data=new google.visualization.DataTable();
+    data.addColumn('string','Name');
+    data.addColumn('number','Count');
+    arr.slice(0,10).forEach(x=>data.addRow([x.name,x.count]));
+    const chart=new google.visualization.ColumnChart(document.getElementById(elId));
+    chart.draw(data,{title,backgroundColor:'transparent',legend:'none',titleTextStyle:{color:'#e8eefc'},hAxis:{textStyle:{color:'#e8eefc'}},vAxis:{textStyle:{color:'#e8eefc'}}});
+  }
+
+  function downloadTableCSV(tableId, filename){
+    const table=document.getElementById(tableId);
+    const rows=[...table.querySelectorAll("tr")].map(tr =>
+      [...tr.querySelectorAll("th,td")].map(td => `"${String(td.innerText).replace(/"/g,'""')}"`).join(",")
+    );
+    const csv=rows.join("\n");
+    const blob=new Blob([csv],{type:"text/csv;charset=utf-8;"});
+    const link=document.createElement("a");
+    link.href=URL.createObjectURL(blob);
+    link.download=filename;
+    link.click();
+  }
+
+  // CONFIG
+  function loadConfig(){
+    toast("Loading config…");
+    google.script.run.withSuccessHandler(function(data){
+      document.getElementById("cfgCounters").value = (data||[]).map(r=>r.join("\t")).join("\n");
+      toast("AgencyCounters loaded.", "ok");
+    }).getAgencyCounters();
+
+    google.script.run.withSuccessHandler(function(data){
+      document.getElementById("cfgServices").value = (data||[]).map(r=>r.join("\t")).join("\n");
+      toast("AgencyServices loaded.", "ok");
+    }).getAgencyServices();
+  }
+
+  function parseTSV(text){
+    const lines=text.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+    return lines.map(line => line.split("\t"));
+  }
+
+  function saveCounters(){
+    const rows=parseTSV(document.getElementById("cfgCounters").value);
+    if(rows.length<=1){ toast("No data to save.", "bad"); return; }
+    const body=rows.slice(1).map(r=>({
+      counterNo:Number(r[0]),
+      agency:r[1],
+      normalCode:r[2],
+      priorityCode:r[3],
+      active:(String(r[4]).toUpperCase()!=="FALSE"),
+      sortOrder:Number(r[5])||999
+    }));
+    toast("Saving AgencyCounters…");
+    google.script.run.withSuccessHandler(msg=>{toast(msg,"ok"); loadAgencyDropdown();})
+      .withFailureHandler(err=>toast(err.message||err,"bad"))
+      .saveAgencyCounters(body);
+  }
+
+  function saveServices(){
+    const rows=parseTSV(document.getElementById("cfgServices").value);
+    if(rows.length<=1){ toast("No data to save.", "bad"); return; }
+    const body=rows.slice(1).map(r=>({
+      agency:r[0],
+      item:r[1],
+      active:(String(r[2]).toUpperCase()!=="FALSE"),
+      sortOrder:Number(r[3])||999
+    }));
+    toast("Saving AgencyServices…");
+    google.script.run.withSuccessHandler(msg=>toast(msg,"ok"))
+      .withFailureHandler(err=>toast(err.message||err,"bad"))
+      .saveAgencyServices(body);
+  }
+
+  fillYearPick();
+  setDefaults();
+  loadAgencyDropdown();
+  refresh();
+</script>
+</body>
+</html>
