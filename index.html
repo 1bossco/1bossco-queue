@@ -247,40 +247,27 @@
   // ------------------------------
   // Load agencies without duplicates
   // ------------------------------
-  function loadAgencies(){
-    google.script.run.withSuccessHandler(function(list){
-      // list may contain duplicates because AgencyCounters has multiple rows per agency
-      // We dedupe by agency name while keeping lowest sort (so ordering stays stable).
-      const map = new Map();
-
-      (list || []).forEach(x=>{
-        const name = x.agency;
-        if(!name) return;
-
-        if(!map.has(name)){
-          map.set(name, x);
-          return;
-        }
-        // keep the one with smaller sort value
-        const existing = map.get(name);
-        if((Number(x.sort)||999) < (Number(existing.sort)||999)){
-          map.set(name, x);
-        }
-      });
-
-      const unique = Array.from(map.values())
-        .sort((a,b)=>(Number(a.sort)||999)-(Number(b.sort)||999) || String(a.agency).localeCompare(String(b.agency)));
-
-      const sel = document.getElementById("agency");
-      sel.innerHTML = "";
-      unique.forEach(x=>{
-        const o = document.createElement("option");
-        o.value = x.agency;
-        o.textContent = x.agency;
-        sel.appendChild(o);
-      });
-    }).getClientAgencyOptions();
-  }
+async function loadAgencies() {
+  const { data } = await _db
+    .from('agency_counters')
+    .select('*')
+    .eq('active', true)
+    .order('sort_order');
+  // dedupe by agency_name same as before
+  const map = new Map();
+  (data || []).forEach(x => {
+    if (!map.has(x.agency_name)) map.set(x.agency_name, x);
+  });
+  const unique = Array.from(map.values());
+  const sel = document.getElementById("agency");
+  sel.innerHTML = "";
+  unique.forEach(x => {
+    const o = document.createElement("option");
+    o.value = x.agency_name;
+    o.textContent = x.agency_name;
+    sel.appendChild(o);
+  });
+}
 
   // ------------------------------
   // Ticket generation
@@ -355,3 +342,4 @@
 </body>
 
 </html>
+
