@@ -272,38 +272,47 @@ async function loadAgencies() {
   // ------------------------------
   // Ticket generation
   // ------------------------------
-  function getTicket(){
-    const agency = document.getElementById("agency").value;
-    const gender = document.getElementById("gender").value;
-    const isPriority = document.getElementById("priority").checked;
+  // Replace google.script.run.generateTicketFromAgency(...)
+async function getTicket() {
+  const agency = document.getElementById("agency").value;
+  const gender = document.getElementById("gender").value;
+  const isPriority = document.getElementById("priority").checked;
 
-    if(!agency){ alert("Please select an agency."); return; }
-    if(!gender){ alert("Please select gender."); return; }
+  // 1. Look up the service code
+  const { data: rows } = await _db
+    .from('agency_counters')
+    .select('*')
+    .eq('agency_name', agency)
+    .eq('active', true)
+    .limit(1);
+  
+  if (!rows || !rows.length) { alert("Agency not found"); return; }
+  const code = isPriority ? rows[0].priority_code : rows[0].normal_code;
 
-    const btn = document.getElementById("getTicketBtn");
-    btn.disabled = true;
-    document.getElementById("loading").style.display = "inline";
-    document.getElementById("ticketBox").style.display = "none";
+  // 2. Get last ticket number for this code
+  const { data: last } = await _db
+    .from('queue_data')
+    .select('ticket')
+    .like('ticket', code + '-%')
+    .order('id', { ascending: false })
+    .limit(1);
 
-    google.script.run
-      .withSuccessHandler(function(result){
-        btn.disabled = false;
-        document.getElementById("loading").style.display = "none";
+  const lastNum = last && last.length ? parseInt(last[0].ticket.split('-')[1]) : 0;
+  const ticketNo = code + '-' + String(lastNum + 1).padStart(3, '0');
 
-        document.getElementById("ticketBox").style.display = "block";
-        document.getElementById("ticketNo").textContent = result.ticket;
-        document.getElementById("ticketSvc").textContent = result.service;
-        document.getElementById("ticketCounter").textContent = result.counter;
+  // 3. Insert into queue_data
+  await _db.from('queue_data').insert({
+    ticket: ticketNo,
+    service: agency,
+    status: 'Waiting',
+    counter: 'Counter ' + rows[0].counter_no,
+    gender: gender
+  });
 
-        printTicket(result.ticket, result.service, result.counter);
-      })
-      .withFailureHandler(function(err){
-        btn.disabled = false;
-        document.getElementById("loading").style.display = "none";
-        alert("ERROR: " + (err && err.message ? err.message : err));
-      })
-      .generateTicketFromAgency(agency, gender, isPriority);
-  }
+  // Show ticket
+  document.getElementById("ticketNo").textContent = ticketNo;
+  document.getElementById("ticketBox").style.display = "block";
+}
 
   function printTicket(ticket, service, counter) {
     let win = window.open("", "PRINT", "width=300,height=600");
@@ -342,4 +351,5 @@ async function loadAgencies() {
 </body>
 
 </html>
+
 
